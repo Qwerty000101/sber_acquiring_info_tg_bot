@@ -36,11 +36,17 @@ def get_inline_keyboard(current_step=None, back_step=None):
     if current_step == "general_info":
         buttons = [
             [InlineKeyboardButton("Какие карты можно принимать", callback_data="cards:general_info")],
-            [InlineKeyboardButton("Как посмотреть операции", callback_data="operations:general_info")]
+            [InlineKeyboardButton("Как посмотреть операции", callback_data="operations:general_info")],
+            [InlineKeyboardButton("Срок возврата средств покупателю при отмене услуги", callback_data="return:general_info")],
+            [InlineKeyboardButton("Как принимать к оплате карты American Express?", callback_data="americanexpress:general_info")]
         ]
     elif current_step == "cards_info":
         buttons = [[InlineKeyboardButton("Назад", callback_data=f"back:{back_step}")]]
     elif current_step == "operations_info":
+        buttons = [[InlineKeyboardButton("Назад", callback_data=f"back:{back_step}")]]
+    elif current_step == "return_info":
+        buttons = [[InlineKeyboardButton("Назад", callback_data=f"back:{back_step}")]]
+    elif current_step == "americanexpress_info":
         buttons = [[InlineKeyboardButton("Назад", callback_data=f"back:{back_step}")]]
     else:
         buttons = [
@@ -102,6 +108,17 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 MESSAGES["operations_info"],
                 reply_markup=get_inline_keyboard(current_step="operations_info", back_step=back_step)
             )
+        elif action == "americanexpress":
+            await query.edit_message_text(
+                MESSAGES["americanexpress_info"],
+                reply_markup=get_inline_keyboard(current_step="americanexpress_info", back_step=back_step)
+            )
+        elif action == "return":
+            await query.edit_message_text(
+                MESSAGES["return_info"],
+                reply_markup=get_inline_keyboard(current_step="return_info", back_step=back_step)
+            )
+
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.error(f"Ошибка: {context.error}", exc_info=True)
