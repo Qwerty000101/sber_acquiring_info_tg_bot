@@ -3,13 +3,13 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKe
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
 from config import BOT_TOKEN
 from messages import MESSAGES
+
 # Настройка логирования
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
-
 
 def log_user_action(update: Update, action: str):
     user = update.effective_user
@@ -21,38 +21,79 @@ def log_user_action(update: Update, action: str):
             logger.info(f"Пользователь {user_info} отправил сообщение: {action}")
         print(f"Действие пользователя: {user_info}, Действие: {action}")
 
-
 def get_start_keyboard():
     return ReplyKeyboardMarkup(
-        [["Общая информация", "Подключение и отключение"]],
+        [
+            ["Общая информация по операциям"],
+            ["Подключение и отключение эквайринга"],
+            ["Зачисление денег"],
+            ["Стоимость и оплата услуг эквайринга"],
+            ["Техническая поддержка эквайринга"],
+            ["Стоимость эквайринга на условиях публичных тарифов"]
+        ],
         resize_keyboard=True,
-        input_field_placeholder="Выберите действие"
+        input_field_placeholder="Выберите раздел"
     )
 
 def get_inline_keyboard(current_step=None, back_step=None):
     buttons = []
     
-    # Основные кнопки для разных шагов
     if current_step == "general_info":
         buttons = [
-            [InlineKeyboardButton("Какие карты можно принимать", callback_data="cards:general_info")],
-            [InlineKeyboardButton("Как посмотреть операции", callback_data="operations:general_info")],
-            [InlineKeyboardButton("Срок возврата средств покупателю при отмене услуги", callback_data="return:general_info")],
-            [InlineKeyboardButton("Как принимать к оплате карты American Express?", callback_data="americanexpress:general_info")]
+            [InlineKeyboardButton("Какие карты можно принимать к оплате", callback_data="cards:general_info")],
+            [InlineKeyboardButton("Где посмотреть информацию по операциям", callback_data="operations:general_info")],
+            [InlineKeyboardButton("Срок возврата средств при отмене", callback_data="return:general_info")],
+            [InlineKeyboardButton("Карты American Express", callback_data="americanexpress:general_info")]
         ]
-    elif current_step == "cards_info":
-        buttons = [[InlineKeyboardButton("Назад", callback_data=f"back:{back_step}")]]
-    elif current_step == "operations_info":
-        buttons = [[InlineKeyboardButton("Назад", callback_data=f"back:{back_step}")]]
-    elif current_step == "return_info":
-        buttons = [[InlineKeyboardButton("Назад", callback_data=f"back:{back_step}")]]
-    elif current_step == "americanexpress_info":
-        buttons = [[InlineKeyboardButton("Назад", callback_data=f"back:{back_step}")]]
-    else:
+    elif current_step == "connection_info":
         buttons = [
-            [InlineKeyboardButton("Какие карты можно принимать", callback_data="cards:main")],
-            [InlineKeyboardButton("Как посмотреть операции", callback_data="operations:main")]
+            [InlineKeyboardButton("Как подключить эквайринг", callback_data="connect:connection_info")],
+            [InlineKeyboardButton("Расторжение договора", callback_data="disconnect:connection_info")]
         ]
+    elif current_step == "money_info":
+        buttons = [
+            [InlineKeyboardButton("Проверка зачисления выручки", callback_data="check_money:money_info")],
+            [InlineKeyboardButton("Сроки зачисления", callback_data="money_terms:money_info")],
+            [InlineKeyboardButton("Почему зачисление не сразу", callback_data="money_delay:money_info")]
+        ]
+    elif current_step == "cost_info":
+        buttons = [
+            [InlineKeyboardButton("Стоимость услуг", callback_data="service_cost:cost_info")],
+            [InlineKeyboardButton("Как сэкономить", callback_data="save_money:cost_info")],
+            [InlineKeyboardButton("Кешбэк по картам", callback_data="cashback:cost_info")],
+            [InlineKeyboardButton("Перенос комиссии на плательщика", callback_data="fee_transfer:cost_info")],
+            [InlineKeyboardButton("Эквайринг без 3D-Secure", callback_data="no_3dsecure:cost_info")],
+            [InlineKeyboardButton("Оплата из-за границы", callback_data="foreign_payments:cost_info")],
+            [InlineKeyboardButton("Комиссия при отказе", callback_data="refund_fee:cost_info")]
+        ]
+    elif current_step == "support_info":
+        buttons = [
+            [InlineKeyboardButton("Не работает POS-терминал", callback_data="pos_problem:support_info")],
+            [InlineKeyboardButton("Не работает интернет-эквайринг", callback_data="online_problem:support_info")],
+            [InlineKeyboardButton("СМС-информирование", callback_data="sms_info:support_info")],
+            [InlineKeyboardButton("Программа 'Спасибо'", callback_data="thanks_program:support_info")]
+        ]
+    elif current_step == "tariffs_info":
+        buttons = [
+            [InlineKeyboardButton("Состав тарифа", callback_data="tariff_structure:tariffs_info")],
+            [InlineKeyboardButton("Динамический тариф", callback_data="dynamic_tariff:tariffs_info")],
+            [InlineKeyboardButton("Расчёт динамического тарифа", callback_data="tariff_calc:tariffs_info")],
+            [InlineKeyboardButton("Начальный тариф", callback_data="initial_tariff:tariffs_info")],
+            [InlineKeyboardButton("Промотариф", callback_data="promo_tariff:tariffs_info")],
+            [InlineKeyboardButton("Бесплатный POS-терминал", callback_data="free_pos:tariffs_info")],
+            [InlineKeyboardButton("Тариф за смарт-терминал", callback_data="smart_terminal:tariffs_info")],
+            [InlineKeyboardButton("Начисление сервисной платы", callback_data="service_fee:tariffs_info")],
+            [InlineKeyboardButton("Оплата сервисной платы", callback_data="fee_payment:tariffs_info")]
+        ]
+    elif current_step in ["cards_info", "operations_info", "return_info", "americanexpress_info",
+                         "connect_info", "disconnect_info", "check_money_info", "money_terms_info",
+                         "money_delay_info", "service_cost_info", "save_money_info", "cashback_info",
+                         "fee_transfer_info", "no_3dsecure_info", "foreign_payments_info", "refund_fee_info",
+                         "pos_problem_info", "online_problem_info", "sms_info_info", "thanks_program_info",
+                         "tariff_structure_info", "dynamic_tariff_info", "tariff_calc_info", "initial_tariff_info",
+                         "promo_tariff_info", "free_pos_info", "smart_terminal_info", "service_fee_info",
+                         "fee_payment_info"]:
+        buttons = [[InlineKeyboardButton("Назад", callback_data=f"back:{back_step}")]]
     
     return InlineKeyboardMarkup(buttons)
 
@@ -67,13 +108,36 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     log_user_action(update, f"Текст: '{text}'")
     
-    if text == "Общая информация":
+    if text == "Общая информация по операциям":
         await update.message.reply_text(
             MESSAGES["general_info"],
             reply_markup=get_inline_keyboard(current_step="general_info")
         )
-    elif text == "Подключение и отключение":
-        await update.message.reply_text(MESSAGES["connection_info"])
+    elif text == "Подключение и отключение эквайринга":
+        await update.message.reply_text(
+            MESSAGES["connection_info"],
+            reply_markup=get_inline_keyboard(current_step="connection_info")
+        )
+    elif text == "Зачисление денег":
+        await update.message.reply_text(
+            MESSAGES["money_info"],
+            reply_markup=get_inline_keyboard(current_step="money_info")
+        )
+    elif text == "Стоимость и оплата услуг эквайринга":
+        await update.message.reply_text(
+            MESSAGES["cost_info"],
+            reply_markup=get_inline_keyboard(current_step="cost_info")
+        )
+    elif text == "Техническая поддержка эквайринга":
+        await update.message.reply_text(
+            MESSAGES["support_info"],
+            reply_markup=get_inline_keyboard(current_step="support_info")
+        )
+    elif text == "Стоимость эквайринга на условиях публичных тарифов":
+        await update.message.reply_text(
+            MESSAGES["tariffs_info"],
+            reply_markup=get_inline_keyboard(current_step="tariffs_info")
+        )
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -83,9 +147,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     log_user_action(update, f"Кнопка: '{data}'")
     
     if data.startswith("back:"):
-        # Обработка кнопки "Назад"
         back_step = data.split(":")[1]
-        if back_step == "general_info":
+        if back_step in ["general_info", "connection_info", "money_info", "cost_info", "support_info", "tariffs_info"]:
             await query.edit_message_text(
                 MESSAGES[back_step],
                 reply_markup=get_inline_keyboard(current_step=back_step)
@@ -96,29 +159,14 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 reply_markup=get_start_keyboard()
             )
     else:
-        # Обработка обычных кнопок
         action, back_step = data.split(":")
-        if action == "cards":
+        message_key = f"{action}_info"
+        
+        if message_key in MESSAGES:
             await query.edit_message_text(
-                MESSAGES["cards_info"],
-                reply_markup=get_inline_keyboard(current_step="cards_info", back_step=back_step)
+                MESSAGES[message_key],
+                reply_markup=get_inline_keyboard(current_step=message_key, back_step=back_step)
             )
-        elif action == "operations":
-            await query.edit_message_text(
-                MESSAGES["operations_info"],
-                reply_markup=get_inline_keyboard(current_step="operations_info", back_step=back_step)
-            )
-        elif action == "americanexpress":
-            await query.edit_message_text(
-                MESSAGES["americanexpress_info"],
-                reply_markup=get_inline_keyboard(current_step="americanexpress_info", back_step=back_step)
-            )
-        elif action == "return":
-            await query.edit_message_text(
-                MESSAGES["return_info"],
-                reply_markup=get_inline_keyboard(current_step="return_info", back_step=back_step)
-            )
-
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.error(f"Ошибка: {context.error}", exc_info=True)
