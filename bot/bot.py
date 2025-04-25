@@ -29,7 +29,8 @@ def get_start_keyboard():
             ["Зачисление денег"],
             ["Стоимость и оплата услуг эквайринга"],
             ["Техническая поддержка эквайринга"],
-            ["Стоимость эквайринга на условиях публичных тарифов"]
+            ["Стоимость эквайринга на условиях публичных тарифов"],
+            ["Управление эквайрингом"]
         ],
         resize_keyboard=True,
         input_field_placeholder="Выберите раздел"
@@ -94,6 +95,29 @@ def get_inline_keyboard(current_step=None, back_step=None):
                          "promo_tariff_info", "free_pos_info", "smart_terminal_info", "service_fee_info",
                          "fee_payment_info"]:
         buttons = [[InlineKeyboardButton("Назад", callback_data=f"back:{back_step}")]]
+    elif current_step == "management_info":
+        buttons = [
+            [InlineKeyboardButton("Текущий и будущий тариф", callback_data="tariff_view:management_info")],
+            [InlineKeyboardButton("Счёт за сервисную плату", callback_data="service_invoice:management_info")],
+            [InlineKeyboardButton("Отчёт по зачислениям", callback_data="income_report:management_info")],
+            [InlineKeyboardButton("Возврат покупки", callback_data="refund_process:management_info")],
+            [InlineKeyboardButton("Заказ оборудования", callback_data="order_equipment:management_info")],
+            [InlineKeyboardButton("Новая торговая точка", callback_data="new_outlet:management_info")],
+            [InlineKeyboardButton("Изменение данных точки", callback_data="outlet_update:management_info")],
+            [InlineKeyboardButton("Оплаты по SberPay QR", callback_data="sberpay_qr:management_info")],
+            [InlineKeyboardButton("Логин QR кассира", callback_data="qr_cashier:management_info")],
+            [InlineKeyboardButton("Настройка смартфона", callback_data="phone_setup:management_info")],
+            [InlineKeyboardButton("История оплат QR", callback_data="qr_history:management_info")],
+            [InlineKeyboardButton("Разблокировка QR", callback_data="qr_unlock:management_info")],
+            [InlineKeyboardButton("Блокировка оборудования", callback_data="equipment_block:management_info")],
+            [InlineKeyboardButton("Поддержка эквайринга", callback_data="management_support:management_info")]
+        ]
+    elif current_step in ["tariff_view_info", "service_invoice_info", "income_report_info",
+                         "refund_process_info", "order_equipment_info", "new_outlet_info",
+                         "outlet_update_info", "sberpay_qr_info", "qr_cashier_info",
+                         "phone_setup_info", "qr_history_info", "qr_unlock_info",
+                         "equipment_block_info", "management_support_info"]:
+        buttons = [[InlineKeyboardButton("Назад", callback_data=f"back:{back_step}")]]
     
     return InlineKeyboardMarkup(buttons)
 
@@ -138,7 +162,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             MESSAGES["tariffs_info"],
             reply_markup=get_inline_keyboard(current_step="tariffs_info")
         )
-
+    elif text == "Управление эквайрингом":
+        await update.message.reply_text(
+            MESSAGES["management_info"],
+            reply_markup=get_inline_keyboard(current_step="management_info")
+        )
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -148,7 +176,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if data.startswith("back:"):
         back_step = data.split(":")[1]
-        if back_step in ["general_info", "connection_info", "money_info", "cost_info", "support_info", "tariffs_info"]:
+        if back_step in ["general_info", "connection_info", "money_info", "cost_info", "support_info", "tariffs_info", "management_info"]:
             await query.edit_message_text(
                 MESSAGES[back_step],
                 reply_markup=get_inline_keyboard(current_step=back_step)
