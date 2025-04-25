@@ -30,7 +30,8 @@ def get_start_keyboard():
             ["Стоимость и оплата услуг эквайринга"],
             ["Техническая поддержка эквайринга"],
             ["Стоимость эквайринга на условиях публичных тарифов"],
-            ["Управление эквайрингом"]
+            ["Управление эквайрингом"],
+            ["Работа с интернет-заказами"] 
         ],
         resize_keyboard=True,
         input_field_placeholder="Выберите раздел"
@@ -105,10 +106,10 @@ def get_inline_keyboard(current_step=None, back_step=None):
             [InlineKeyboardButton("Новая торговая точка", callback_data="new_outlet:management_info")],
             [InlineKeyboardButton("Изменение данных точки", callback_data="outlet_update:management_info")],
             [InlineKeyboardButton("Оплаты по SberPay QR", callback_data="sberpay_qr:management_info")],
-            [InlineKeyboardButton("Логин QR кассира", callback_data="qr_cashier:management_info")],
+            [InlineKeyboardButton("Генерация QR кода", callback_data="qr_cashier:management_info")],
             [InlineKeyboardButton("Настройка смартфона", callback_data="phone_setup:management_info")],
             [InlineKeyboardButton("История оплат QR", callback_data="qr_history:management_info")],
-            [InlineKeyboardButton("Разблокировка QR", callback_data="qr_unlock:management_info")],
+            [InlineKeyboardButton("Включение уведомлений об оплате по QR", callback_data="qr_unlock:management_info")],
             [InlineKeyboardButton("Блокировка оборудования", callback_data="equipment_block:management_info")],
             [InlineKeyboardButton("Поддержка эквайринга", callback_data="management_support:management_info")]
         ]
@@ -118,7 +119,32 @@ def get_inline_keyboard(current_step=None, back_step=None):
                          "phone_setup_info", "qr_history_info", "qr_unlock_info",
                          "equipment_block_info", "management_support_info"]:
         buttons = [[InlineKeyboardButton("Назад", callback_data=f"back:{back_step}")]]
+    elif current_step == "online_orders_info":
+        buttons = [
+            [InlineKeyboardButton("Пароль и ключи API", callback_data="api_keys:online_orders_info")],
+            [InlineKeyboardButton("Настройка интернет-терминала", callback_data="terminal_setup:online_orders_info")],
+            [InlineKeyboardButton("Поиск и детали заказа", callback_data="order_details:online_orders_info")],
+            [InlineKeyboardButton("Завершение заказа", callback_data="complete_order:online_orders_info")],
+            [InlineKeyboardButton("Отмена заказа", callback_data="cancel_order:online_orders_info")],
+            [InlineKeyboardButton("Возврат по заказу", callback_data="order_refund:online_orders_info")],
+            [InlineKeyboardButton("Ссылка на оплату", callback_data="payment_link:online_orders_info")],
+            [InlineKeyboardButton("Отчёт по интернет-эквайрингу", callback_data="online_report:online_orders_info")],
+            [InlineKeyboardButton("Подключение онлайн-кассы", callback_data="connect_kassa:online_orders_info")],
+            [InlineKeyboardButton("Изменение данных онлайн-кассы", callback_data="update_kassa:online_orders_info")],
+            [InlineKeyboardButton("Колбэк-уведомления", callback_data="callback_notify:online_orders_info")],
+            [InlineKeyboardButton("Изменение URL для колбэков", callback_data="update_callback:online_orders_info")],
+            [InlineKeyboardButton("Уведомления на email", callback_data="email_notify:online_orders_info")],
+            [InlineKeyboardButton("Повторная отправка чеков", callback_data="resend_receipts:online_orders_info")]
+        ]
+    elif current_step in ["api_keys_info", "terminal_setup_info", "order_details_info",
+                         "complete_order_info", "cancel_order_info", "order_refund_info",
+                         "payment_link_info", "online_report_info", "connect_kassa_info",
+                         "update_kassa_info", "callback_notify_info", "update_callback_info",
+                         "email_notify_info", "resend_receipts_info"]:
+        buttons = [[InlineKeyboardButton("Назад", callback_data=f"back:{back_step}")]]
+
     
+
     return InlineKeyboardMarkup(buttons)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -167,6 +193,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             MESSAGES["management_info"],
             reply_markup=get_inline_keyboard(current_step="management_info")
         )
+    elif text == "Работа с интернет-заказами":
+        await update.message.reply_text(
+            MESSAGES["online_orders_info"],
+            reply_markup=get_inline_keyboard(current_step="online_orders_info")
+        )
+
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -176,7 +208,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if data.startswith("back:"):
         back_step = data.split(":")[1]
-        if back_step in ["general_info", "connection_info", "money_info", "cost_info", "support_info", "tariffs_info", "management_info"]:
+        if back_step in ["general_info", "connection_info", "money_info", "cost_info", "support_info", "tariffs_info", "management_info", "online_orders_info"]:
             await query.edit_message_text(
                 MESSAGES[back_step],
                 reply_markup=get_inline_keyboard(current_step=back_step)
